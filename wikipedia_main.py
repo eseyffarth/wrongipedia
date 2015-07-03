@@ -63,7 +63,7 @@ def stick_together_output():
 
                         random_second_page_text = random_second_page_content.split("<p>")[1].split("</p>")[0]
                         random_second_page_text = re.sub("<[^>]+>", "", random_second_page_text)
-                        first_sentence2 = re.split("[^\s].\.\s", random_second_page_text, 1)[0]+"."
+                        first_sentence2 = re.split("(?<=[^\s].)\.\s", random_second_page_text, 1)[0]
 
                         while re.search(round_bracket_pattern, first_sentence2):
                             first_sentence2 = re.sub(round_bracket_pattern, " ", first_sentence2)
@@ -76,8 +76,7 @@ def stick_together_output():
                                 finished = True
 
 
-    while output.endswith(".."):
-        output = output[:-1]
+    output = output.strip(". :")+"."
     return output
 
 def tweet_something(debug):
@@ -90,5 +89,6 @@ def tweet_something(debug):
             api.update_status(status=output)
             print output
     except:
-        api.send_direct_message(screen_name = "ojahnn", text = str(sys.exc_info())[:139] + " " + time.strftime("%H:%M:%S"))
+        api.send_direct_message(screen_name = "ojahnn", text = str(sys.exc_info())[:130] + " " + time.strftime("%H:%M:%S"))
+
 tweet_something(False)
