@@ -6,8 +6,8 @@ import wikipedia_config
 import tweepy
 import re
 import urllib2
-
-import sys
+import HTMLParser
+import traceback
 import time
 
 
@@ -29,8 +29,8 @@ def login():
 def stick_together_output():
 
     first_sentence_pattern = re.compile("^(([^\.]+)(\s+is\s+|\s+are\s+|\s+was\s+|\s+were\s+)([^\.]+\.))\s+")
-    round_bracket_pattern = re.compile("\s+(\()[^\)\]]+(\))\s+")
-    square_bracket_pattern = re.compile("\s+(\[)[^\)\]]+(\])\s+")
+    round_bracket_pattern = re.compile("(\()[^\)\]]+(\))")
+    square_bracket_pattern = re.compile("(\[)[^\)\]]+(\])")
 
     finished = False
     while not finished:
@@ -45,9 +45,9 @@ def stick_together_output():
             first_sentence1 = re.split("[^\s].\.\s", seed_text, 1)[0]+". "
 
             while re.search(round_bracket_pattern, first_sentence1):
-                first_sentence1 = re.sub(round_bracket_pattern, " ", first_sentence1)
+                first_sentence1 = re.sub(round_bracket_pattern, "", first_sentence1)
             while re.search(square_bracket_pattern, first_sentence1):
-                first_sentence1 = re.sub(square_bracket_pattern, " ", first_sentence1)
+                first_sentence1 = re.sub(square_bracket_pattern, "", first_sentence1)
             m = re.findall(first_sentence_pattern, first_sentence1)
             if m:
                 first_half = m[0][1]
@@ -66,17 +66,21 @@ def stick_together_output():
                         first_sentence2 = re.split("(?<=[^\s].)\.\s", random_second_page_text, 1)[0]
 
                         while re.search(round_bracket_pattern, first_sentence2):
-                            first_sentence2 = re.sub(round_bracket_pattern, " ", first_sentence2)
+                            first_sentence2 = re.sub(round_bracket_pattern, "", first_sentence2)
                         while re.search(square_bracket_pattern, first_sentence2):
-                            first_sentence2 = re.sub(square_bracket_pattern, " ", first_sentence2)
+                            first_sentence2 = re.sub(square_bracket_pattern, "", first_sentence2)
 
                         if connector in first_sentence2:
                             output = output + " " + first_sentence2[first_sentence2.find(connector)+len(connector):]
+                            output = output.strip(". :")+"."
+                            while "  " in output:
+                                output = output.replace("  ", " ")
                             if len(output) < 141:
                                 finished = True
 
 
-    output = output.strip(". :")+"."
+    h = HTMLParser.HTMLParser()
+    output = h.unescape(output)
     return output
 
 def tweet_something(debug):
@@ -89,6 +93,7 @@ def tweet_something(debug):
             api.update_status(status=output)
             print output
     except:
-        api.send_direct_message(screen_name = "ojahnn", text = str(sys.exc_info())[:130] + " " + time.strftime("%H:%M:%S"))
+        error_msg = traceback.format_exc().split("\n", 1)[-130:]
+        api.send_direct_message(screen_name = "ojahnn", text = error_msg + " " + time.strftime("%H:%M:%S"))
 
 tweet_something(False)
